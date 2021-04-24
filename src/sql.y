@@ -108,8 +108,3 @@ name:
 void yyerror(const char* s) {
     printf("Error: %s\n", s);
 }
-
-int main(void) {
-    printf("Enter Query: \n");
-    return yyparse();
-}
