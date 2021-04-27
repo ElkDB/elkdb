@@ -13,19 +13,23 @@ alpha           [a-zA-Z]
 identifier      [a-zA-Z][a-zA-Z0-9_]*
 
 %%
-#.* { ; }
-"--"[ \t].* { ; }
-[ \t\r\n] { ; }
+#.*                                         { ; }
+"--"[ \t].*                                 { ; }
+[ \t\r\n]                                   { ; }
 
-SELECT                                      { printf("Found SELECT\n"); return SELECT; }
-SET                                         { printf("Found SET\n"); return SET; }
-INSERT                                      { printf("Found INSERT\n"); return INSERT; }
-UPSERT                                      { printf("Found UPSERT\n"); return UPSERT; }
-INTO                                        { printf("Found INTO\n"); return INTO; }
-UPDATE                                      { printf("Found UPDATE\n"); return UPDATE; }
-CREATE                                      { printf("Found CREATE\n"); return CREATE; }
-VALUES                                      { printf("Found VALUES\n"); return VALUES; }
-FROM                                        { printf("Found FROM\n"); return FROM; }
+SELECT                                      { return SELECT; }
+SET                                         { return SET; }
+INSERT                                      { return INSERT; }
+UPSERT                                      { return UPSERT; }
+INTO                                        { return INTO; }
+UPDATE                                      { return UPDATE; }
+CREATE                                      { return CREATE; }
+BUCKET                                      { return BUCKET; }
+VALUES                                      { return VALUES; }
+FROM                                        { return FROM; }
+
+"SHOW BUCKETS"                              { return SHOW_BUCKETS; }
+"SET INDENT"                                { return SET_INDENT; }
 
 TRUE {
     yylval.intval = 1; return BOOLEAN;
@@ -39,7 +43,7 @@ FALSE {
     yylval.intval = 0; return BOOLEAN;
 }
 
-[a-zA-Z][a-zA-Z0-9_]*                       { yylval.strval = strdup(yytext); printf("Found variable: %s\n", yylval.strval); return VARIABLE_NAME; }
+[a-zA-Z][a-zA-Z0-9_]*                       { yylval.strval = strdup(yytext); return VARIABLE_NAME; }
 
 
 -?[0-9]+    {
@@ -56,7 +60,9 @@ FALSE {
 
 '(\\.|''|[^'\n])*'                  |
 \"(\\.|\"\"|[^"\n])*\" {
-    yylval.strval = strdup(yytext); return STR;
+    yylval.strval = duplicate_segment(yytext + 1, yyleng - 2);
+    // yylval.strval = strdup(yytext);
+    return STR;
 }
 
 '(\\.|[^'\n])*$ {
@@ -78,6 +84,7 @@ FALSE {
 "<"                                         { return LT; }
 ">"                                         { return GT; }
 
+"\\"                                        { return FORWARD_SLASH; }
 ";"                                         { return SEMICOLON; }
 ":"                                         { return COLON; }
 "+"                                         { return ADD; }
@@ -89,7 +96,7 @@ FALSE {
 "["                                         { return LSBRACE; }
 "]"                                         { return RSBRACE; }
 ","                                         { return COMMA; }
-
+"\n"                                        { printf("New line"); }
 .                                           { return yytext[0]; }
 %%
 
